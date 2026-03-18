@@ -138,14 +138,14 @@ Complete these steps:
 1. [Get the `Qwen Code` API config values (REMOTE)](#get-the-qwen-code-api-config-values-remote):
 
    - `HOST_PORT`
-   - `QWEN_API_KEY`.
+   - `QWEN_API_KEY`
 
 2. To send an [`HTTP` request](./http.md#http-request) to the [`Qwen Code` API](#what-is-qwen-code-api),
 
    [run in the `VS Code Terminal`](./vs-code.md#run-a-command-in-the-vs-code-terminal):
 
    ```terminal
-   curl -s http://<qwen-code-api-address>:<qwen-api-port>/v1/chat/completions \
+   curl -s http://<qwen-code-api-address>:<qwen-code-api-port>/v1/chat/completions \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer <qwen-api-key>" \
      -d '{"model":"<qwen-model>","messages":[{"role":"user","content":"What is 2+2?"}]}' \
@@ -157,7 +157,7 @@ Complete these steps:
    - `<qwen-code-api-address>` with:
      - `localhost` (REMOTE)
      - [`<your-vm-ip-address>`](vm.md#your-vm-ip-address-placeholder) (LOCAL)
-   - `<qwen-api-port>` with the value of `HOST_PORT`
+   - `<qwen-code-api-port>` with the value of `HOST_PORT`
    - `<qwen-api-key>` with the value of `QWEN_API_KEY`
    - `<qwen-model>` with one of the [available models](./qwen-code.md#view-available-models)
 
