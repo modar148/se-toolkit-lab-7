@@ -2,12 +2,13 @@
 Telegram bot entry point with --test mode for offline verification.
 
 Usage:
-    uv run bot.py test start        # Test mode, no Telegram connection
-    uv run bot.py test help
-    uv run bot.py test health
-    uv run bot.py test labs
-    uv run bot.py test scores lab-04
-    uv run bot.py                   # Production mode, connects to Telegram
+    uv run bot.py --test "/start"     # Test mode, no Telegram connection
+    uv run bot.py --test "/help"
+    uv run bot.py --test "/health"
+    uv run bot.py --test "/labs"
+    uv run bot.py --test "/scores lab-04"
+    uv run bot.py test start          # Alternative syntax
+    uv run bot.py                     # Production mode, connects to Telegram
 """
 
 import argparse
@@ -31,7 +32,7 @@ def handle_message(text: str) -> str:
     # Normalize: ensure text starts with /
     if not text.startswith("/"):
         text = "/" + text
-    
+
     if text == "/start":
         return handle_start()
     elif text == "/help":
@@ -50,6 +51,8 @@ def handle_message(text: str) -> str:
 
 def run_test_mode(command: str) -> None:
     """Run a command in test mode and print result to stdout."""
+    # Strip leading / if present to avoid double-slash
+    command = command.lstrip("/")
     response = handle_message("/" + command)
     print(response)
 
@@ -60,54 +63,65 @@ def run_production_mode() -> None:
     from aiogram import Bot, Dispatcher, types
     from aiogram.filters import CommandStart, Command
     from config import config
-    
+
     if not config.bot_token:
         print("Error: BOT_TOKEN not set in .env.bot.secret")
         sys.exit(1)
-    
+
     bot = Bot(token=config.bot_token)
     dp = Dispatcher()
-    
+
     @dp.message(CommandStart())
     async def cmd_start(message: types.Message) -> None:
         await message.answer(handle_start())
-    
+
     @dp.message(Command("help"))
     async def cmd_help(message: types.Message) -> None:
         await message.answer(handle_help())
-    
+
     @dp.message(Command("health"))
     async def cmd_health(message: types.Message) -> None:
         await message.answer(handle_health())
-    
+
     @dp.message(Command("labs"))
     async def cmd_labs(message: types.Message) -> None:
         await message.answer(handle_labs())
-    
+
     @dp.message(Command("scores"))
     async def cmd_scores(message: types.Message) -> None:
         lab_name = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else ""
         await message.answer(handle_scores(lab_name))
-    
+
     async def main() -> None:
         print("Bot started...")
         await dp.start_polling(bot)
-    
+
     asyncio.run(main())
 
 
 def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="LMS Telegram Bot")
-    subparsers = parser.add_subparsers(dest="mode", help="Run mode")
     
-    # Test subcommand
+    # Support both --test flag and test subcommand
+    parser.add_argument(
+        "--test",
+        type=str,
+        metavar="COMMAND",
+        help="Run in test mode with the given command"
+    )
+    
+    # Also support subcommand syntax
+    subparsers = parser.add_subparsers(dest="mode", help="Run mode")
     test_parser = subparsers.add_parser("test", help="Run in test mode")
     test_parser.add_argument("command", nargs="+", help="Command to test")
-    
+
     args = parser.parse_args()
-    
-    if args.mode == "test":
+
+    # Check --test flag first
+    if args.test:
+        run_test_mode(args.test)
+    elif args.mode == "test":
         # Join multi-word commands like "scores lab-04"
         command = " ".join(args.command)
         run_test_mode(command)
