@@ -68,7 +68,7 @@ class LMSAPIClient:
             dict with 'labs' list, 'error' str (if any)
         """
         try:
-            with httpx.Client(timeout=self.timeout) as client:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
                 response = client.get(
                     f"{self.base_url}/items/",
                     headers=self._get_headers()
@@ -76,11 +76,15 @@ class LMSAPIClient:
                 response.raise_for_status()
                 items = response.json()
                 
-                # Filter for labs (items with type 'lab' or all items if no type)
+                # Extract lab names from items
                 labs = []
                 for item in items:
                     if isinstance(item, dict):
-                        labs.append(item)
+                        # Try to get a meaningful name
+                        name = item.get("name") or item.get("title") or item.get("id") or str(item)
+                        labs.append({"id": item.get("id", ""), "name": name})
+                    else:
+                        labs.append({"id": str(item), "name": str(item)})
                 
                 return {"labs": labs}
         except httpx.ConnectError:
@@ -105,7 +109,7 @@ class LMSAPIClient:
             dict with 'scores' list, 'error' str (if any)
         """
         try:
-            with httpx.Client(timeout=self.timeout) as client:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
                 response = client.get(
                     f"{self.base_url}/analytics/pass-rates/",
                     params={"lab": lab_name},
