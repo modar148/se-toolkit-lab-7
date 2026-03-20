@@ -46,19 +46,29 @@ class LLMClient:
         for turn in range(max_turns):
             try:
                 with httpx.Client(timeout=self.timeout) as client:
+                    # Debug: log what we're sending
+                    request_data = {
+                        "model": self.model,
+                        "messages": messages,
+                        "tools": tools,
+                        "tool_choice": "auto",
+                    }
+                    print(f"[llm] Sending request to {self.base_url}/chat/completions", file=sys.stderr)
+                    print(f"[llm] Model: {self.model}", file=sys.stderr)
+                    
                     response = client.post(
                         f"{self.base_url}/chat/completions",
                         headers={
                             "Authorization": f"Bearer {self.api_key}",
                             "Content-Type": "application/json",
                         },
-                        json={
-                            "model": self.model,
-                            "messages": messages,
-                            "tools": tools,
-                            "tool_choice": "auto",
-                        },
+                        json=request_data,
                     )
+                    
+                    if response.status_code != 200:
+                        print(f"[llm] Error response: {response.status_code}", file=sys.stderr)
+                        print(f"[llm] Response body: {response.text[:500]}", file=sys.stderr)
+                    
                     response.raise_for_status()
                     data = response.json()
             except httpx.HTTPStatusError as e:
