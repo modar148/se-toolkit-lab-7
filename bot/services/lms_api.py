@@ -131,6 +131,101 @@ class LMSAPIClient:
         except Exception as e:
             return {"error": str(e)}
 
+    def get_items(self) -> dict:
+        """Get all items (labs and tasks)."""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/items/",
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                return {"items": response.json()}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_learners(self) -> dict:
+        """Get all enrolled learners."""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/learners/",
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                return {"learners": response.json()}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_timeline(self, lab_name: str) -> dict:
+        """Get submission timeline for a lab."""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/analytics/timeline/",
+                    params={"lab": lab_name},
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                return {"timeline": response.json()}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_groups(self, lab_name: str) -> dict:
+        """Get per-group performance for a lab."""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/analytics/groups/",
+                    params={"lab": lab_name},
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                return {"groups": response.json()}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_top_learners(self, lab_name: str, limit: int = 5) -> dict:
+        """Get top learners for a lab."""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/analytics/top-learners/",
+                    params={"lab": lab_name, "limit": limit},
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                return {"top_learners": response.json()}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_completion_rate(self, lab_name: str) -> dict:
+        """Get completion rate for a lab."""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/analytics/completion-rate/",
+                    params={"lab": lab_name},
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                return {"completion_rate": response.json()}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def trigger_sync(self) -> dict:
+        """Trigger ETL sync."""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.post(
+                    f"{self.base_url}/pipeline/sync",
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                return {"sync": "triggered"}
+        except Exception as e:
+            return {"error": str(e)}
+
 
 # Global client instance
 lms_client = LMSAPIClient()

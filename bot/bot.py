@@ -24,36 +24,46 @@ from handlers.commands import (
     handle_health,
     handle_labs,
     handle_scores,
+    handle_natural_language,
 )
 
 
 def handle_message(text: str) -> str:
     """Route a message to the appropriate handler."""
-    # Normalize: ensure text starts with /
-    if not text.startswith("/"):
-        text = "/" + text
-
-    if text == "/start":
-        return handle_start()
-    elif text == "/help":
-        return handle_help()
-    elif text == "/health":
-        return handle_health()
-    elif text == "/labs":
-        return handle_labs()
-    elif text.startswith("/scores"):
-        parts = text.split(maxsplit=1)
-        lab_name = parts[1] if len(parts) > 1 else ""
-        return handle_scores(lab_name)
+    # Check if it's a command (starts with /)
+    if text.startswith("/"):
+        if text == "/start":
+            return handle_start()
+        elif text == "/help":
+            return handle_help()
+        elif text == "/health":
+            return handle_health()
+        elif text == "/labs":
+            return handle_labs()
+        elif text.startswith("/scores"):
+            parts = text.split(maxsplit=1)
+            lab_name = parts[1] if len(parts) > 1 else ""
+            return handle_scores(lab_name)
+        else:
+            return "Unknown command. Use /help to see available commands."
     else:
-        return "Unknown command. Use /help to see available commands."
+        # Natural language message - use LLM intent router
+        return handle_natural_language(text)
 
 
 def run_test_mode(command: str) -> None:
     """Run a command in test mode and print result to stdout."""
     # Strip leading / if present to avoid double-slash
     command = command.lstrip("/")
-    response = handle_message("/" + command)
+    
+    # If it was a command (had /), treat as command
+    # Otherwise treat as natural language
+    if command.startswith("/"):
+        response = handle_message(command)
+    else:
+        # Natural language - pass directly to handle_message
+        response = handle_message(command)
+    
     print(response)
 
 
@@ -62,6 +72,7 @@ def run_production_mode() -> None:
     import asyncio
     from aiogram import Bot, Dispatcher, types
     from aiogram.filters import CommandStart, Command
+    
     from config import config
 
     if not config.bot_token:
@@ -91,6 +102,14 @@ def run_production_mode() -> None:
     async def cmd_scores(message: types.Message) -> None:
         lab_name = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else ""
         await message.answer(handle_scores(lab_name))
+
+    @dp.message()
+    async def handle_natural_language_message(message: types.Message) -> None:
+        """Handle non-command messages with LLM intent routing."""
+        text = message.text
+        if text and not text.startswith("/"):
+            response = handle_natural_language(text)
+            await message.answer(response)
 
     async def main() -> None:
         print("Bot started...")
