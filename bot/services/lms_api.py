@@ -101,10 +101,10 @@ class LMSAPIClient:
     def get_scores(self, lab_name: str) -> dict:
         """
         Get scores for a specific lab.
-        
+
         Args:
             lab_name: The lab identifier (e.g., 'lab-04')
-            
+
         Returns:
             dict with 'scores' list, 'error' str (if any)
         """
@@ -118,6 +118,39 @@ class LMSAPIClient:
                 response.raise_for_status()
                 data = response.json()
                 return {"scores": data}
+        except httpx.ConnectError:
+            return {
+                "error": f"connection refused ({self.base_url})"
+            }
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return {"error": f"lab '{lab_name}' not found"}
+            return {
+                "error": f"HTTP {e.response.status_code}"
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_pass_rates(self, lab_name: str) -> dict:
+        """
+        Get pass rates for a specific lab.
+
+        Args:
+            lab_name: The lab identifier (e.g., 'lab-04')
+
+        Returns:
+            dict with 'pass_rates' list, 'error' str (if any)
+        """
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/analytics/pass-rates/",
+                    params={"lab": lab_name},
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                data = response.json()
+                return {"pass_rates": data}
         except httpx.ConnectError:
             return {
                 "error": f"connection refused ({self.base_url})"
