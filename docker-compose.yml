@@ -47,11 +47,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/app/data/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:?'POSTGRES_USER is required'} -d ${POSTGRES_DB:?'POSTGRES_DB is required'}",
-        ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:?'POSTGRES_USER is required'} -d ${POSTGRES_DB:?'POSTGRES_DB is required'}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -89,8 +85,31 @@ services:
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
 
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - lms-network
+    environment:
+      # Telegram bot token
+      - BOT_TOKEN=${BOT_TOKEN:?'BOT_TOKEN is required'}
+      # Backend API - use Docker service name, not localhost
+      - LMS_API_URL=http://backend:${BACKEND_CONTAINER_PORT:?'BACKEND_CONTAINER_PORT is required'}
+      - LMS_API_KEY=${LMS_API_KEY:?'LMS_API_KEY is required'}
+      # LLM API - use host.docker.internal to reach host network (Qwen proxy is on different network)
+      - LLM_API_BASE_URL=http://host.docker.internal:42005/v1
+      - LLM_API_KEY=${LLM_API_KEY:?'LLM_API_KEY is required'}
+      - LLM_API_MODEL=${LLM_API_MODEL:-coder-model}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
+
 
 networks:
   lms-network:
