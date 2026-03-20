@@ -23,7 +23,8 @@ class LLMClient:
     ):
         self.api_key = api_key or config.llm_api_key
         self.base_url = (base_url or config.llm_api_base_url).rstrip("/")
-        self.model = model or config.llm_model
+        # Use llm_api_model from env, fallback to llm_model
+        self.model = model or config.llm_api_model or config.llm_model
         self.timeout = 30.0
 
     def chat_with_tools(
