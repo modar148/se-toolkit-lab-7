@@ -22,11 +22,14 @@ class BotConfig(BaseSettings):
 
     # LLM API (for Task 3 - intent routing)
     llm_api_key: str = ""
+    llm_api_base_url: str = ""
+    llm_api_model: str = ""
     llm_model: str = "gpt-4o-mini"
 
     class Config:
         env_file = ".env.bot.secret"
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
 
 def load_config() -> BotConfig:
