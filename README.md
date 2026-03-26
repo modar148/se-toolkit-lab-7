@@ -162,4 +162,9 @@ cd ~/se-toolkit-lab-7
 git pull
 docker compose --env-file .env.docker.secret up --build -d
 ```
+
 This is the task 1 update
+This is the task 2 update
+This is the task 1 update
+
+
