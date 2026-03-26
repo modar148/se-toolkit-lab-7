@@ -163,3 +163,13 @@ git pull
 docker compose --env-file .env.docker.secret up --build -d
 ```
 This is the task 4 update
+
+
+This is the task 3 update
+
+
+This is the task 1 update
+This is the task 2 update
+This is the task 1 update
+
+
